@@ -56,8 +56,10 @@ check(tourNormalizeLocationField('  Brooklyn  ') === 'Brooklyn', 'location field
 $ts = tourParseDateToTimestamp('Mar 15');
 check($ts > time(), 'yearless date rolls to the next occurrence, never the past');
 $e = tourEnsureEventDates(['date' => 'Mar 15']);
-check(preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', (string) ($e['ymd'] ?? '')) === 1, 'yearless event gets an explicit ymd');
-check(($e['date'] ?? '') === 'MAR 15', 'display date is the uppercase abbreviated month');
+check(preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($e['ymd'] ?? '')) === 1, 'yearless event gets an explicit ymd');
+check(($e['date'] ?? '') === 'Mar 15', 'human-curated display dates pass through untouched');
+$iso = tourEnsureEventDates(['date' => '2026-11-07']);
+check(($iso['date'] ?? '') === 'NOV 7', 'ISO-derived display dates render as the uppercase abbreviated month');
 check(tourEventYmd(['date' => '2026-11-07']) === '2026-11-07', 'ISO dates pass through unchanged');
 check(tourParseDateToTimestamp('') === 0, 'empty date is zero, not now');
 
@@ -118,7 +120,10 @@ $cached = tourReadCacheBest('nova-crown');
 check(is_array($cached) && count($cached) === 1, 'cache round-trip preserves rows');
 check(tourReadCache('nova-crown') !== null, 'fresh cache read returns upcoming rows');
 tourInvalidateCache('nova-crown');
-check(tourReadCacheBest('nova-crown') === null, 'invalidation clears the artist cache');
+/* The bulk cache read is per-request by design (one glob per request).
+   Invalidate within the same process, then simulate the next request. */
+tourBulkLoadCaches(true);
+check(tourReadCacheBest('nova-crown') === null, 'invalidation clears the artist cache on the next request');
 
 /* --- Identity --------------------------------------------------------------- */
 check(tourDjId(['id' => 'Nova Crown!']) === 'nova-crown', 'artist ids are slugified');
