@@ -126,7 +126,8 @@ tourBulkLoadCaches(true);
 check(tourReadCacheBest('nova-crown') === null, 'invalidation clears the artist cache on the next request');
 
 /* --- Identity --------------------------------------------------------------- */
-check(tourDjId(['id' => 'Nova Crown!']) === 'nova-crown', 'artist ids are slugified');
+check(tourDjId(['id' => 'nova-crown']) === 'nova-crown', 'slug ids pass through unchanged');
+check(tourDjId(['id' => 'Nova Crown!']) === 'novacrown', 'non-slug characters are stripped from ids');
 check(tourDjId(['name' => 'Fred again..']) === 'fredagain', 'name fallback slugifies too');
 
 /* --- Garbage resistance ------------------------------------------------------ */
